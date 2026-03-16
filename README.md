@@ -24,6 +24,22 @@ See [GETTING_STARTED.md](./GETTING_STARTED.md) for:
 - API endpoints
 - Your tasks
 
+## Screenshots
+
+### Profile Page
+<img src="./screenshots/profile-1.png" width="400" alt="Profile - New User">
+<img src="./screenshots/profile-2.png" width="400" alt="Profile - Returning User">
+<img src="./screenshots/profile-3.png" width="400" alt="Profile - Existing User">
+
+### Plan Selection
+<img src="./screenshots/plans.png" width="400" alt="Plan Selection">
+
+### Coupon Page
+<img src="./screenshots/coupons.png" width="400" alt="Coupon Page">
+
+### Summary Page
+<img src="./screenshots/summary.png" width="400" alt="Summary Page">
+
 ## Tech Stack
 
 - **Frontend**: React + Vite + Tailwind CSS
