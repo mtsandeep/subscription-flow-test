@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark-darkest min-h-screen font-brutal text-white antialiased;
+  }
+
+  ::selection {
+    @apply bg-secondary text-white;
+  }
+}
+
+@layer components {
+  /* Neo-brutalism card */
+  .brutal-card {
+    @apply bg-dark-lighter border-2 border-brutal-black shadow-brutal p-6 rounded-lg;
+  }
+
+  /* Neo-brutalism button variants */
+  .btn-brutal {
+    @apply px-6 py-3 font-bold border-2 border-brutal-black shadow-brutal
+           transition-all duration-150 uppercase tracking-wide
+           hover:shadow-brutal-hover hover:translate-x-0.5 hover:translate-y-0.5
+           active:shadow-none active:translate-x-1 active:translate-y-1;
+  }
+
+  .btn-primary {
+    @apply btn-brutal bg-primary text-brutal-black hover:bg-primary-light;
+  }
+
+  .btn-secondary {
+    @apply btn-brutal bg-secondary text-white hover:bg-secondary-light;
+  }
+
+  .btn-outline {
+    @apply btn-brutal bg-transparent text-white border-brutal-white hover:bg-dark-lighter;
+  }
+
+  /* Neo-brutalism input */
+  .input-brutal {
+    @apply w-full px-4 py-3 bg-dark border-2 border-brutal-black
+           text-white placeholder-gray-500 font-medium
+           focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+           transition-all duration-150;
+  }
+
+  /* Neo-brutalism label */
+  .label-brutal {
+    @apply block text-sm font-bold text-gray-300 mb-2 uppercase tracking-wide;
+  }
+
+  /* Step indicator */
+  .step-indicator {
+    @apply inline-flex items-center justify-center w-8 h-8
+           border-2 border-brutal-black font-bold text-sm
+           shadow-brutal-sm;
+  }
+
+  .step-active {
+    @apply step-indicator bg-primary text-brutal-black;
+  }
+
+  .step-inactive {
+    @apply step-indicator bg-dark text-gray-500 border-gray-600;
+  }
+
+  /* Progress bar */
+  .progress-brutal {
+    @apply h-2 bg-dark border-2 border-brutal-black overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-primary transition-all duration-500;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+}
