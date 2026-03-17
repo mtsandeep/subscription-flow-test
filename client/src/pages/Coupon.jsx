@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -17,15 +18,31 @@ import { useNavigate } from 'react-router-dom';
  */
 function Coupon() {
   const navigate = useNavigate();
+  const [couponCode, setCouponCode] = useState('');
+  const [validatedCoupon, setValidatedCoupon] = useState(null);
 
   // TODO: Implement coupon state
-  const couponCode = '';
   const couponError = null;
-  const validatedCoupon = null;
 
   const handleApplyCoupon = async () => {
     // TODO: Call POST /api/validate-coupon
     console.log('Validating coupon:', couponCode);
+
+    setValidatedCoupon(
+      couponCode === 'WELCOME10'
+        ? {
+            code: 'WELCOME10',
+            discountPercent: 10,
+            remainingUses: 100,
+          }
+        : couponCode === 'SUPER50'
+          ? {
+              code: 'SUPER50',
+              discountPercent: 50,
+              remainingUses: 5,
+            }
+          : null,
+    );
   };
 
   const handleBack = () => {
@@ -60,6 +77,10 @@ function Coupon() {
           <input
             type="text"
             id="coupon"
+            value={couponCode}
+            onChange={(e) => {
+              setCouponCode(e.target.value);
+            }}
             placeholder="Enter coupon code"
             className="input-brutal flex-1 uppercase tracking-wider"
           />
@@ -73,7 +94,7 @@ function Coupon() {
 
         {/* Validation feedback */}
         {couponError && (
-          <div className="bg-red-500/10 border-2 border-brutal-black p-4 mb-6 shadow-brutal-sm">
+          <div className="bg-red-500/10 border-2 border-brutal-black p-4 mb-6 mt-6 shadow-brutal-sm">
             <p className="text-white font-bold flex items-center gap-2">
               <span>&#9888;</span>
               {couponError}
@@ -82,20 +103,23 @@ function Coupon() {
         )}
 
         {validatedCoupon && (
-          <div className="bg-primary/20 border-2 border-brutal-black p-4 mb-6 shadow-brutal-sm">
+          <div className="bg-primary/20 border-2 border-brutal-black p-4 mb-6 mt-6 shadow-brutal-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-brutal-black font-bold flex items-center gap-2">
+                <p className="text-primary font-bold flex items-center gap-2">
                   <span>&#10003;</span>
                   Coupon Applied!
                 </p>
-                <p className="text-brutal-black/70 text-sm">
+                <p className="text-gray-200 text-sm">
                   {validatedCoupon.discountPercent}% off your subscription
+                </p>
+                <p className="text-gray-400 text-xs">
+                  {validatedCoupon.remainingUses} uses remaining after yours
                 </p>
               </div>
               <div className="text-right">
-                <span className="text-2xl font-bold text-brutal-black">
-                  -${validatedCoupon.discountPercent}%
+                <span className="text-2xl font-bold text-primary">
+                  -{validatedCoupon.discountPercent}%
                 </span>
               </div>
             </div>
