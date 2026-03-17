@@ -9,7 +9,8 @@
     "dev:client": "bun run --cwd client dev",
     "setup:env": "bun scripts/setup-env.js",
     "setup": "bun run setup:env && bun install && bun run --cwd server db:seed",
-    "start": "bun run --cwd server start"
+    "db:seed": "bun run --cwd server db:seed",
+    "db:reset": "bun run --cwd server db:reset"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

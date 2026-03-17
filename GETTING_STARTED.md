@@ -35,20 +35,16 @@
 ## Quick Start
 
 ```bash
-# Option 1: Full setup (recommended for first time)
+# Full setup (env + install + seed)
 bun run setup
 
-# Option 2: Manual setup
-# 1. Setup environment files
-bun run setup:env
+# Or manual control:
+bun run setup:env   # Setup environment files
+bun install         # Install dependencies
+bun run db:seed     # Seed the database (creates tables and initial data)
+bun run db:reset    # Reset the database (drops and recreates tables, then seeds)
 
-# 2. Install dependencies
-bun install
-
-# 3. Seed the database (creates tables and initial data)
-bun run --cwd server db:seed
-
-# 4. Start both frontend and backend
+# Start development servers
 bun run dev
 ```
 
@@ -157,31 +153,6 @@ TODO: Add columns for subscription details
 ## Tasks
 
 See [TASKS.md](./TASKS.md) for the complete list of tasks to implement.
-
-## Development Commands
-
-```bash
-# Setup environment files from templates
-bun run setup:env
-
-# Full setup (env + install + seed)
-bun run setup
-
-# Run both frontend and backend
-bun run dev
-
-# Run only backend
-bun run dev:server
-
-# Run only frontend
-bun run dev:client
-
-# Re-seed database (resets all data)
-bun run --cwd server db:seed
-
-# Reset database (drops and recreates tables)
-bun run --cwd server db:reset
-```
 
 ## API Endpoints
 
