@@ -18,11 +18,8 @@ This will start:
 
 ## Documentation
 
-See [GETTING_STARTED.md](./GETTING_STARTED.md) for:
-- Project overview and requirements
-- Database schema
-- API endpoints
-- Your tasks
+- **[GETTING_STARTED.md](./GETTING_STARTED.md)** - Project setup, database schema, API reference
+- **[TASKS.md](./TASKS.md)** - What you need to implement (start here)
 
 ## Screenshots
 
