@@ -2,6 +2,16 @@
 
 This document outlines what you need to implement. Please read carefully.
 
+## How to Submit
+
+1. Fork this repository to your GitHub account
+2. Make your changes in a branch on your fork
+3. Once done, open a Pull Request against the `main` branch of this repository
+
+> AI tools and AI-powered IDEs are allowed and encouraged. We care about whether you understand what you've built, not how you built it.
+
+---
+
 ## Scope
 
 **What you SHOULD do:**
@@ -82,7 +92,8 @@ You can use: React Context, localStorage, URL state, or any approach you prefer.
 ### 2. Page Refresh Handling
 If the user refreshes at any step:
 - Redirect back to `/profile`
-- show `existingUser` view of the profile page with previously entered data
+- The user's profile data should be persisted across refreshes — so the profile fields are pre-filled and the user doesn't have to enter their details again
+- Only profile data needs to survive a refresh; other selections made during the flow do not need to be restored
 
 ### 3. Connect the Flow
 
@@ -111,12 +122,13 @@ Your submission will be evaluated on:
 
 ## Tips
 
-1. Start with the backend, test endpoints with curl or Postman
-2. Then connect the frontend pages one by one
-3. Test the complete flow before submitting
-4. Edge cases to test:
+1. Test the complete flow before submitting
+2. The app has a working UI — run it locally to understand the expected behavior before writing code
+3. Edge cases to test:
    - Invalid coupon code
    - Coupon that reached max uses
    - User refreshes mid-flow
    - Existing username (returning user with/without subscription)
    - Two users trying to use the last coupon simultaneously
+4. For the race condition, think about what happens at the database level — not just the application level
+5. Consider what a sensible API response looks like for both success and failure cases — the frontend needs enough info to show the right UI

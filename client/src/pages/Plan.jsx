@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
  * - Display available plans with price
  * - Allow user to select a plan
  * - Plan should be selected to continue to next page
- * - if user refreshes in this page, they should go back to profile with filled data
+ * - if user refreshes in this page, they should go back to profile
  * 
  * HINT: How will you store the selected plan for later pages?
  */

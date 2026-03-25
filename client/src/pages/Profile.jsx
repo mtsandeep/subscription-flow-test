@@ -16,8 +16,8 @@ import { usersApi } from "../api/users";
  * - On submit, call POST /api/users to create user
  * - Store user details for subsequent pages
  * - Navigate to /plan on success
- * - Data should persist so if user refreshes at any step,
- *   they come back to profile page with filled data
+ * - Profile data should persist across
+ *   page refreshes — so the user doesn't have to re-enter their details
  *
  * HINT: How will you pass this data to other pages?
  * - Context? LocalStorage? URL params? Something else?

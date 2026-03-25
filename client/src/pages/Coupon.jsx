@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
  * 
  * REQUIREMENTS:
  * - Allow user to apply a coupon code (optional)
- * - If user refreshes in this page, they should go back to profile with filled data
+ * - If user refreshes in this page, they should go back to profile
  * 
  * HINT: Store the validated coupon info for the summary page
  */
