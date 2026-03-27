@@ -1,18 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { plansApi } from '../api/plans';
+import { useSubscription } from '../context/SubscriptionContext';
 
 /**
  * Plan Page - Step 2/4
- *
- * TODO: Allow user to select a gym subscription plan
- * 
- * REQUIREMENTS:
- * - Display available plans with price
- * - Allow user to select a plan
- * - Plan should be selected to continue to next page
- * - if user refreshes in this page, they should go back to profile with filled data
- * 
- * HINT: How will you store the selected plan for later pages?
  */
 
 // Static plan details (description and features)
@@ -37,38 +29,44 @@ const PLAN_DETAILS = {
   },
 };
 
-// TODO: Replace with API call to GET /api/plans
-// Mock plan data from API (id, name, price)
-const PLANS = [
-  {
-    id: 1,
-    name: 'Basic',
-    price: 149900, // ₹1,499 in paise
-  },
-  {
-    id: 2,
-    name: 'Pro',
-    price: 299900, // ₹2,999 in paise
-  },
-];
-
 // Helper to merge API plans with static details
-const mergePlansWithDetails = (plans) => {
-  return plans.map((plan) => ({
+const mergePlansWithDetails = (plansList) => {
+  return plansList.map((plan) => ({
     ...plan,
-    ...PLAN_DETAILS[plan.name],
+    ...(PLAN_DETAILS[plan.name] || { description: '', features: [] }),
   }));
 };
 
 function Plan() {
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const { user, plan: contextPlan, setPlan } = useSubscription();
 
-  // TODO: Fetch plans from API and merge with PLAN_DETAILS
-  const plans = mergePlansWithDetails(PLANS);
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const data = await plansApi.getAll();
+        setPlans(mergePlansWithDetails(data.plans || []));
+      } catch (err) {
+        setError('Failed to fetch plans. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
+
+  // Redirect to profile if no user exists in context (e.g. refreshed page)
+  if (!user) {
+    return <Navigate to="/profile" replace />;
+  }
 
   const handleSelectPlan = (plan) => {
-    setSelectedPlan(plan);
+    setPlan(plan);
   };
 
   const handleBack = () => {
@@ -76,8 +74,9 @@ function Plan() {
   };
 
   const handleContinue = () => {
-    // TODO: Check if plan is selected before continuing
-    navigate('/coupon');
+    if (contextPlan) {
+      navigate('/coupon');
+    }
   };
 
   // Format price to INR
@@ -101,79 +100,90 @@ function Plan() {
         <p className="text-gray-400">Select the gym membership that fits your fitness goals</p>
       </div>
 
-      {/* Plan Cards */}
-      <div className="space-y-6 mb-8">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            onClick={() => handleSelectPlan(plan)}
-            className={`relative p-6 border-2 border-brutal-black cursor-pointer transition-all duration-150
-              ${selectedPlan?.id === plan.id
-                ? 'bg-primary shadow-brutal translate-x-0.5 translate-y-0.5'
-                : 'bg-dark-lighter shadow-brutal hover:shadow-brutal-hover hover:translate-x-0.5 hover:translate-y-0.5'
-              }`}
-          >
-            {/* Selection indicator */}
-            <div className={`absolute top-4 right-4 w-6 h-6 border-2 border-brutal-black flex items-center justify-center
-              ${selectedPlan?.id === plan.id ? 'bg-brutal-black' : 'bg-transparent'}`}
+      {loading ? (
+        <div className="text-white text-center py-8">Loading plans...</div>
+      ) : error ? (
+        <div className="bg-red-500/10 border-2 border-brutal-black p-4 mb-6 shadow-brutal-sm">
+          <p className="text-white font-bold">{error}</p>
+        </div>
+      ) : (
+        <div className="space-y-6 mb-8">
+          {plans.map((planOption) => (
+            <div
+              key={planOption.id}
+              onClick={() => handleSelectPlan(planOption)}
+              className={`relative p-6 border-2 border-brutal-black cursor-pointer transition-all duration-150
+                ${contextPlan?.id === planOption.id
+                  ? 'bg-primary shadow-brutal translate-x-0.5 translate-y-0.5'
+                  : 'bg-dark-lighter shadow-brutal hover:shadow-brutal-hover hover:translate-x-0.5 hover:translate-y-0.5'
+                }`}
             >
-              {selectedPlan?.id === plan.id && (
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
+              {/* Selection indicator */}
+              <div className={`absolute top-4 right-4 w-6 h-6 border-2 border-brutal-black flex items-center justify-center
+                ${contextPlan?.id === planOption.id ? 'bg-brutal-black' : 'bg-transparent'}`}
+              >
+                {contextPlan?.id === planOption.id && (
+                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </div>
+
+              {/* Plan info */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className={`text-2xl font-bold ${contextPlan?.id === planOption.id ? 'text-brutal-black' : 'text-white'}`}>
+                    {planOption.name}
+                  </h3>
+                  <p className={`text-sm ${contextPlan?.id === planOption.id ? 'text-brutal-black/70' : 'text-gray-400'}`}>
+                    {planOption.description}
+                  </p>
+                </div>
+                <div className="text-right pr-10">
+                  <span className={`text-3xl font-bold ${contextPlan?.id === planOption.id ? 'text-brutal-black' : 'text-primary'}`}>
+                    {formatPrice(planOption.price)}
+                  </span>
+                  <span className={`text-sm block ${contextPlan?.id === planOption.id ? 'text-brutal-black/70' : 'text-gray-400'}`}>
+                    /month
+                  </span>
+                </div>
+              </div>
+
+              {/* Features */}
+              <div className="mt-4 pt-4 border-t border-brutal-black/20">
+                <ul className="space-y-2">
+                  {planOption.features.map((feature, idx) => (
+                    <li key={idx} className={`flex items-center gap-2 text-sm ${contextPlan?.id === planOption.id ? 'text-brutal-black' : 'text-gray-300'}`}>
+                      <span className={`${contextPlan?.id === planOption.id ? 'text-brutal-black' : 'text-primary'} font-bold`}>✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Pro badge */}
+              {planOption.name === 'Pro' && (
+                <div className={`absolute -top-3 -left-3 px-3 py-1 text-xs font-bold uppercase tracking-wider border-2 border-brutal-black shadow-brutal-sm ${
+                  contextPlan?.id === planOption.id ? 'bg-accent text-brutal-black' : 'bg-secondary text-white'
+                }`}>
+                  Popular
+                </div>
               )}
             </div>
-
-            {/* Plan info */}
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className={`text-2xl font-bold ${selectedPlan?.id === plan.id ? 'text-brutal-black' : 'text-white'}`}>
-                  {plan.name}
-                </h3>
-                <p className={`text-sm ${selectedPlan?.id === plan.id ? 'text-brutal-black/70' : 'text-gray-400'}`}>
-                  {plan.description}
-                </p>
-              </div>
-              <div className="text-right pr-10">
-                <span className={`text-3xl font-bold ${selectedPlan?.id === plan.id ? 'text-brutal-black' : 'text-primary'}`}>
-                  {formatPrice(plan.price)}
-                </span>
-                <span className={`text-sm block ${selectedPlan?.id === plan.id ? 'text-brutal-black/70' : 'text-gray-400'}`}>
-                  /month
-                </span>
-              </div>
-            </div>
-
-            {/* Features */}
-            <div className="mt-4 pt-4 border-t border-brutal-black/20">
-              <ul className="space-y-2">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className={`flex items-center gap-2 text-sm ${selectedPlan?.id === plan.id ? 'text-brutal-black' : 'text-gray-300'}`}>
-                    <span className={`${selectedPlan?.id === plan.id ? 'text-brutal-black' : 'text-primary'} font-bold`}>✓</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Pro badge */}
-            {plan.id === 2 && (
-              <div className={`absolute -top-3 -left-3 px-3 py-1 text-xs font-bold uppercase tracking-wider border-2 border-brutal-black shadow-brutal-sm ${
-                selectedPlan?.id === plan.id ? 'bg-accent text-brutal-black' : 'bg-secondary text-white'
-              }`}>
-                Popular
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Navigation Buttons */}
       <div className="flex gap-4">
         <button onClick={handleBack} className="btn-outline flex-1">
           Back
         </button>
-        <button onClick={handleContinue} className="btn-primary flex-1">
+        <button 
+          onClick={handleContinue} 
+          disabled={!contextPlan}
+          className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Continue
         </button>
       </div>

@@ -29,10 +29,18 @@ CREATE TABLE IF NOT EXISTS coupons (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Subscriptions table (initially empty)
+-- Subscriptions table
 CREATE TABLE IF NOT EXISTS subscriptions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT
-  -- Add subscription fields here as needed
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  plan_id INTEGER NOT NULL,
+  coupon_id INTEGER,
+  final_price INTEGER NOT NULL, -- Final price paid in paisa
+  status TEXT DEFAULT 'active',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (plan_id) REFERENCES plans(id),
+  FOREIGN KEY (coupon_id) REFERENCES coupons(id)
 );
 
 -- Insert default plans (prices in paisa)

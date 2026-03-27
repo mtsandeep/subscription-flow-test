@@ -1,51 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { usersApi } from "../api/users";
+import { useSubscription } from "../context/SubscriptionContext";
 
 /**
  * Profile Page - Step 1/4
- *
- * TODO: Collect user information:
- * - Username (required, unique)
- * - Name (required)
- * - Age (optional)
- * - Weight in kg (optional)
- * - Height in cm (optional)
- *
- * REQUIREMENTS:
- * - On submit, call POST /api/users to create user
- * - Store user details for subsequent pages
- * - Navigate to /plan on success
- * - Data should persist so if user refreshes at any step,
- *   they come back to profile page with filled data
- *
- * HINT: How will you pass this data to other pages?
- * - Context? LocalStorage? URL params? Something else?
  */
 function Profile() {
   const navigate = useNavigate();
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const { user, setUser, clearSelections, resetFlow } = useSubscription();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [existingUser, setExistingUser] = useState(null);
 
-  // Mock data for subscribed user
-  const subscribedUser = {
-    name: "John Doe",
-    username: "johndoe",
-    age: 28,
-    weight: 75.5,
-    height: 178,
-    plan: {
-      name: "Pro",
-      price: 299900,
-    },
-    renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-  };
+  // Derive existingUser and subscribedUser states from Context
+  const existingUser = user && !user.subscription ? user : null;
+  const subscribedUser = user && user.subscription ? user : null;
 
   const handleLogout = () => {
-    setIsSubscribed(false);
-    setExistingUser(null);
+    resetFlow();
     setError(null);
   };
 
@@ -64,12 +37,12 @@ function Profile() {
   };
 
   // Format date
-  const formatDate = (date) => {
+  const formatDate = (dateStr) => {
     return new Intl.DateTimeFormat("en-IN", {
       day: "numeric",
       month: "long",
       year: "numeric",
-    }).format(date);
+    }).format(new Date(dateStr));
   };
 
   const handleSubmit = async (e) => {
@@ -88,6 +61,8 @@ function Profile() {
 
     try {
       const response = await usersApi.create(userData);
+      setUser(response.user);
+      clearSelections(); // clear previous abandoned flow if any
       navigate("/plan");
     } catch (err) {
       // If user already exists, fetch their data and show logged in view
@@ -97,19 +72,23 @@ function Profile() {
       ) {
         try {
           const userResponse = await usersApi.getByUsername(userData.username);
-          setExistingUser(userResponse.user);
+          setUser({ ...userResponse.user, subscription: userResponse.subscription });
+          clearSelections();
         } catch {
           setError("Failed to fetch user data. Please try again.");
         }
         return;
       }
+      // Or if it failed to create user
       setError(
-        err.response?.data?.error || "Failed to create user. Please try again.",
+        err.response?.data?.error || "Failed to create user. Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
+
+  // Render logic continues below...
 
   // Existing User View (logged in, no plan yet)
   if (existingUser) {
@@ -211,7 +190,9 @@ function Profile() {
   }
 
   // Subscribed User View
-  if (isSubscribed) {
+  if (subscribedUser) {
+    const { subscription } = subscribedUser;
+
     return (
       <div className="brutal-card">
         {/* Card Header */}
@@ -271,18 +252,24 @@ function Profile() {
                   @{subscribedUser.username}
                 </p>
               </div>
-              <div>
-                <span className="text-gray-500 text-xs">Age</span>
-                <p className="text-white font-medium">
-                  {subscribedUser.age} years
-                </p>
-              </div>
-              <div>
-                <span className="text-gray-500 text-xs">Body Stats</span>
-                <p className="text-white font-medium">
-                  {subscribedUser.weight} kg / {subscribedUser.height} cm
-                </p>
-              </div>
+              {subscribedUser.age && (
+                <div>
+                  <span className="text-gray-500 text-xs">Age</span>
+                  <p className="text-white font-medium">
+                    {subscribedUser.age} years
+                  </p>
+                </div>
+              )}
+              {(subscribedUser.weight || subscribedUser.height) && (
+                <div>
+                  <span className="text-gray-500 text-xs">Body Stats</span>
+                  <p className="text-white font-medium">
+                    {subscribedUser.weight && `${subscribedUser.weight} kg`}
+                    {subscribedUser.weight && subscribedUser.height && " / "}
+                    {subscribedUser.height && `${subscribedUser.height} cm`}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -294,15 +281,15 @@ function Profile() {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-2xl font-bold text-brutal-black">
-                  {subscribedUser.plan.name}
+                  {subscription.plan_name}
                 </p>
                 <p className="text-brutal-black/70 text-sm">
-                  {formatPrice(subscribedUser.plan.price)}/month
+                  {formatPrice(subscription.final_price)} {subscription.coupon_code && <span className="ml-1 text-xs">({subscription.coupon_code} Applied)</span>} 
                 </p>
               </div>
               <div className="px-3 py-1 bg-accent border-2 border-brutal-black">
                 <span className="text-xs font-bold uppercase text-brutal-black">
-                  Active
+                  {subscription.status}
                 </span>
               </div>
             </div>
@@ -311,9 +298,9 @@ function Profile() {
           {/* Renewal Info */}
           <div className="flex justify-between items-center py-4 px-4 bg-secondary border-2 border-brutal-black">
             <div>
-              <span className="text-gray-300 text-xs block">Next Renewal</span>
+              <span className="text-gray-300 text-xs block">Subscribed On</span>
               <span className="text-white font-bold">
-                {formatDate(subscribedUser.renewalDate)}
+                {formatDate(subscription.created_at)}
               </span>
             </div>
             <button className="px-4 py-2 bg-white text-brutal-black font-bold border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:translate-x-0.5 hover:translate-y-0.5 transition-all">
@@ -327,15 +314,6 @@ function Profile() {
           <button className="btn-outline w-full">Update Profile</button>
           <button className="text-gray-500 text-sm hover:text-gray-300 w-full text-center">
             View Payment History
-          </button>
-        </div>
-        {/* Demo Toggle */}
-        <div className="mt-2 flex justify-end">
-          <button
-            onClick={() => setIsSubscribed(false)}
-            className="text-xs text-gray-500 hover:text-gray-300 underline"
-          >
-            [Demo] Switch to New User
           </button>
         </div>
       </div>
@@ -453,15 +431,6 @@ function Profile() {
             disabled={loading}
           >
             {loading ? "Creating Profile..." : "Continue to Plan Selection →"}
-          </button>
-        </div>
-        {/* Demo Toggle */}
-        <div className="mb-6 flex justify-end">
-          <button
-            onClick={() => setIsSubscribed(true)}
-            className="text-xs text-gray-500 hover:text-gray-300 underline"
-          >
-            [Demo] Switch to Subscribed User
           </button>
         </div>
       </form>

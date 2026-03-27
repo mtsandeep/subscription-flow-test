@@ -1,48 +1,42 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { couponsApi } from '../api/coupons';
+import { useSubscription } from '../context/SubscriptionContext';
 
 /**
  * Coupon Page - Step 3/4
- *
- * TODO: Allow user to apply a coupon code (optional)
- *
- * AVAILABLE COUPONS (from database):
- * - WELCOME10: 10% off (max 100 uses)
- * - SUPER50: 50% off (max 5 uses)
- * 
- * REQUIREMENTS:
- * - Allow user to apply a coupon code (optional)
- * - If user refreshes in this page, they should go back to profile with filled data
- * 
- * HINT: Store the validated coupon info for the summary page
  */
 function Coupon() {
   const navigate = useNavigate();
-  const [couponCode, setCouponCode] = useState('');
-  const [validatedCoupon, setValidatedCoupon] = useState(null);
+  const { user, plan, coupon, setCoupon } = useSubscription();
 
-  // TODO: Implement coupon state
-  const couponError = null;
+  const [couponCode, setCouponCode] = useState(coupon?.code || '');
+  const [loading, setLoading] = useState(false);
+  const [couponError, setCouponError] = useState(null);
+
+  // Redirect to profile if no user or plan exists (refresh handling)
+  if (!user || !plan) {
+    return <Navigate to="/profile" replace />;
+  }
 
   const handleApplyCoupon = async () => {
-    // TODO: Call POST /api/validate-coupon
-    console.log('Validating coupon:', couponCode);
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
 
-    setValidatedCoupon(
-      couponCode === 'WELCOME10'
-        ? {
-            code: 'WELCOME10',
-            discountPercent: 10,
-            remainingUses: 100,
-          }
-        : couponCode === 'SUPER50'
-          ? {
-              code: 'SUPER50',
-              discountPercent: 50,
-              remainingUses: 5,
-            }
-          : null,
-    );
+    setLoading(true);
+    setCouponError(null);
+
+    try {
+      const response = await couponsApi.validate({ code: couponCode.trim().toUpperCase() });
+      setCoupon(response.coupon);
+    } catch (err) {
+      setCoupon(null);
+      setCouponError(err.response?.data?.error || "Invalid coupon code");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -50,6 +44,7 @@ function Coupon() {
   };
 
   const handleSkip = () => {
+    setCoupon(null);
     navigate('/summary');
   };
 
@@ -86,9 +81,10 @@ function Coupon() {
           />
           <button
             onClick={handleApplyCoupon}
-            className="btn-secondary px-6"
+            disabled={loading}
+            className="btn-secondary px-6 disabled:opacity-50"
           >
-            Apply
+            {loading ? '...' : 'Apply'}
           </button>
         </div>
 
@@ -102,7 +98,7 @@ function Coupon() {
           </div>
         )}
 
-        {validatedCoupon && (
+        {coupon && (
           <div className="bg-primary/20 border-2 border-brutal-black p-4 mb-6 mt-6 shadow-brutal-sm">
             <div className="flex items-center justify-between">
               <div>
@@ -111,15 +107,15 @@ function Coupon() {
                   Coupon Applied!
                 </p>
                 <p className="text-gray-200 text-sm">
-                  {validatedCoupon.discountPercent}% off your subscription
+                  {coupon.discount_percent}% off your subscription
                 </p>
                 <p className="text-gray-400 text-xs">
-                  {validatedCoupon.remainingUses} uses remaining after yours
+                  {coupon.max_uses - coupon.current_uses} uses remaining after yours
                 </p>
               </div>
               <div className="text-right">
                 <span className="text-2xl font-bold text-primary">
-                  -{validatedCoupon.discountPercent}%
+                  -{coupon.discount_percent}%
                 </span>
               </div>
             </div>

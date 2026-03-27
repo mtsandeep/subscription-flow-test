@@ -4,16 +4,28 @@ import db from '../db.js';
  * GET /api/users/:username - Get user by username
  */
 export function getUserByUsername(req, res) {
-  const { username } = req.params;
+  const { username } = req.body || req.query || req.params; // Allow params for GET
+  const resolvedUsername = req.params.username || username;
 
   try {
-    const user = db.query('SELECT * FROM users WHERE username = ?').get(username);
+    const user = db.query('SELECT * FROM users WHERE username = ?').get(resolvedUsername);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user });
+    // Check for an active subscription
+    const subscription = db.query(`
+      SELECT s.*, p.name as plan_name, p.price as original_price, c.code as coupon_code, c.discount_percent
+      FROM subscriptions s
+      JOIN plans p ON s.plan_id = p.id
+      LEFT JOIN coupons c ON s.coupon_id = c.id
+      WHERE s.user_id = ? AND s.status = 'active'
+      ORDER BY s.created_at DESC
+      LIMIT 1
+    `).get(user.id);
+
+    res.json({ user, subscription: subscription || null });
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -50,6 +62,6 @@ export function createUser(req, res) {
     res.status(201).json({ success: true, user });
   } catch (error) {
     console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error.message, stack: error.stack });
   }
 }
